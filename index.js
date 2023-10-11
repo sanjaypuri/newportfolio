@@ -194,6 +194,90 @@ app.post("/api/home/buy", fetchuser, async (req, res) => {
   };
 });
 
+///////////////
+//Sell Shares//
+///////////////
+app.post("/api/home/sell", fetchuser, async (req, res) => {
+  let sql = "SELECT * FROM users WHERE username = ?";
+  const { buyid, shareid, saledate, saleqty, salerate } = req.body;
+  try {
+    conn.query(sql, [req.username], (err, result) => {
+      if (err) {
+        return res.json({ success: false, error: err });
+      };
+      if (result.length === 0) {
+        return res.json({ success: false, error: "User not found" });
+      };
+      const userid = result[0].id;
+      console.log(userid);
+      sql = "INSERT INTO sales (buyid, shareid, saledate, saleqty, salerate, userid) VALUES (?, ?, ?, ?, ?, ?)";
+      try{
+        conn.query(sql, [buyid, shareid, saledate, saleqty, salerate, userid], (err, result) => {
+          if(err) {
+            return res.json({success:false, error:err});
+          };
+          if(result.affectedRows){
+            return res.json({success:true, message:"Record saved successfully"});
+          } else {
+            return res.json({success:false, error:"Database error"});
+          };
+        });
+        } catch(err) {
+        return res.json({ success: false, error: err });
+      }
+    });
+  } catch (err) {
+    return res.json({ success: false, error: err });
+  };
+});
+
+
+
+// app.post("/api/home/sell", fetchuser, async (req, res) => {
+//   let sql = "SELECT * FROM users WHERE username = ?";
+//   const { buyid, shareid, saledate, saleqty, salerate } = req.body;
+//   try {
+//     conn.query(sql, [req.username], (err, result) => {
+//       if (err) {
+//         return res.json({ success: false, error: err });
+//       };
+//       if (result.length === 0) {
+//         return res.json({ success: false, error: "User not found" });
+//       };
+//       const userid = result[0].id;
+//       sql = "INSERT INTO sales (buyid, shareid, saledate, saleqty, salerate, userid) VALUES (?, ?, ?, ?, ?, ?)";
+//       try{
+//         conn.query(sql, [buyid, shareid, saledate, saleqty, salerate, userid], (err, result) => {
+//           if (err) {
+//             return res.json({ success: false, error: err });
+//           };
+//           if (result.affectedRows) {
+//             return res.json({
+//               success: true,
+//               newRecord: {
+//                 id: result.insertId,
+//                 shareid: shareid,
+//                 buydate: saledate,
+//                 buyqty: saleqty,
+//                 buyrate: salerate,
+//                 userid: userid
+//               },
+//               message: "Record saves successfully"
+//             });
+//           } else {
+//             return res.json({ success: false, error: "Record not saved" });
+//           };
+//         });
+//       } catch(err) {
+//         return res.json({ success: false, error: err });
+//       };
+//     });
+//   } catch(err) {
+//     return res.json({ success: false, error: err });
+//   };
+
+// });
+
 ////////////////////
 //Purchase History//
 ////////////////////
@@ -209,7 +293,6 @@ app.post("/api/home/listforsale", fetchuser, async (req, res) => {
         return res.json({ success: false, error: "User not found" });
       };
       const userid = result[0].id;
-      console.log(userid);
       sql = "SELECT p.id, c.symbol, c.company, p.buyqty, CAST((p.buyqty-ifnull(s.saleqty,0)) AS FLOAT) AS qtyinhand , p.buyrate FROM purchases p LEFT JOIN companies c ON c.id = p.companyid LEFT JOIN sales s ON s.buyid = p.id WHERE p.userid = ? AND c.symbol = ? AND (p.buyqty-ifnull(s.saleqty,0)) > 0";
       try {
         conn.query(sql, [userid, symbol], (err, result) => {
@@ -244,18 +327,18 @@ app.delete("/api/home/deletebuy/:id", fetchuser, async (req, res) => {
       };
       const userid = result[0].id;
       sql = "DELETE FROM purchases where userid = ? and id = ?";
-      try{
+      try {
         conn.query(sql, [userid, id], (err, result) => {
-          if(err){
-            return res.json({success:false, error:err});
+          if (err) {
+            return res.json({ success: false, error: err });
           };
-          if(result.affectedRows){
-            return res.json({success:true, messgae:"Record deleted successfully"});
+          if (result.affectedRows) {
+            return res.json({ success: true, messgae: "Record deleted successfully" });
           } else {
-            return res.json({success:false, error:"Record Not found"});
+            return res.json({ success: false, error: "Record Not found" });
           }
         });
-        } catch(err) {
+      } catch (err) {
         return res.json({ success: false, error: err });
       };
     });
@@ -263,7 +346,6 @@ app.delete("/api/home/deletebuy/:id", fetchuser, async (req, res) => {
     return res.json({ success: true, error: err });
   };
 });
-
 
 const port = process.env.PORT || 5000;
 
